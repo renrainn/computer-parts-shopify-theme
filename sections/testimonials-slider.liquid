@@ -1,0 +1,137 @@
+{% comment %}
+  Testimonials slider
+  Merchant-editable quotes (blocks) in a CSS scroll-snap slider. No JS needed.
+{% endcomment %}
+
+{% stylesheet %}
+  .tslider { background: var(--ts-bg); color: var(--ts-text); padding: 48px 0; }
+  .tslider__heading { text-align: center; margin: 0 0 32px; }
+  .tslider__track {
+    display: flex;
+    gap: 16px;
+    margin: 0;
+    padding: 0 0 16px;
+    list-style: none;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+  .tslider__card {
+    flex: 0 0 85%;
+    scroll-snap-align: start;
+    padding: 24px;
+    border: 1px solid rgba(128, 128, 128, 0.35);
+    border-radius: 8px;
+  }
+  .tslider__stars { font-size: 1.8rem; letter-spacing: 2px; margin-bottom: 12px; }
+  .tslider__quote { margin: 0 0 16px; font-size: 1.6rem; line-height: 1.6; }
+  .tslider__author { margin: 0; font-weight: 600; }
+  .tslider__role { margin: 0; opacity: 0.7; font-size: 1.3rem; }
+  @media (min-width: 750px) {
+    .tslider__card { flex-basis: calc((100% - 32px) / 3); }
+  }
+{% endstylesheet %}
+
+<div
+  class="tslider"
+  style="--ts-bg: {{ section.settings.bg_color }}; --ts-text: {{ section.settings.text_color }};"
+>
+  <div class="page-width">
+    {%- if section.settings.heading != blank -%}
+      <h2 class="tslider__heading">{{ section.settings.heading | escape }}</h2>
+    {%- endif -%}
+
+    {%- if section.blocks.size > 0 -%}
+      <ul class="tslider__track" role="list">
+        {%- for block in section.blocks -%}
+          <li class="tslider__card" {{ block.shopify_attributes }}>
+            <div class="tslider__stars" role="img" aria-label="{{ block.settings.rating }} out of 5 stars">
+              {%- for i in (1..5) -%}
+                {%- if i <= block.settings.rating -%}★{%- else -%}☆{%- endif -%}
+              {%- endfor -%}
+            </div>
+            <blockquote class="tslider__quote">{{ block.settings.quote | escape }}</blockquote>
+            <p class="tslider__author">{{ block.settings.author | escape }}</p>
+            {%- if block.settings.role != blank -%}
+              <p class="tslider__role">{{ block.settings.role | escape }}</p>
+            {%- endif -%}
+          </li>
+        {%- endfor -%}
+      </ul>
+    {%- elsif request.design_mode -%}
+      <p style="text-align:center;">Add a testimonial block to get started.</p>
+    {%- endif -%}
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Testimonials slider",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "What PC builders say"
+    },
+    {
+      "type": "color",
+      "id": "bg_color",
+      "label": "Background color",
+      "default": "#0f172a"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text color",
+      "default": "#e2e8f0"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "testimonial",
+      "name": "Testimonial",
+      "settings": [
+        {
+          "type": "textarea",
+          "id": "quote",
+          "label": "Quote",
+          "default": "Built my first gaming PC with these parts and it booted first try. Fast shipping and great prices."
+        },
+        {
+          "type": "text",
+          "id": "author",
+          "label": "Customer name",
+          "default": "Jordan K."
+        },
+        {
+          "type": "text",
+          "id": "role",
+          "label": "Label (optional)",
+          "default": "First-time builder"
+        },
+        {
+          "type": "range",
+          "id": "rating",
+          "label": "Star rating",
+          "min": 1,
+          "max": 5,
+          "step": 1,
+          "default": 5
+        }
+      ]
+    }
+  ],
+  "max_blocks": 8,
+  "presets": [
+    {
+      "name": "Testimonials slider",
+      "blocks": [
+        { "type": "testimonial" },
+        { "type": "testimonial" },
+        { "type": "testimonial" }
+      ]
+    }
+  ]
+}
+{% endschema %}
