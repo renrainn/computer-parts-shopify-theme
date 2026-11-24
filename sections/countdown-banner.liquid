@@ -1,0 +1,157 @@
+{% comment %}
+  Countdown banner
+  Announcement bar with a live countdown. The end date is entered as text
+  in the theme editor, format: YYYY-MM-DDTHH:MM (example: 2026-11-30T23:59).
+  The time is read in the visitor's local timezone.
+{% endcomment %}
+
+{% stylesheet %}
+  .cdb { background: var(--cdb-bg); color: var(--cdb-text); padding: 12px 0; }
+  .cdb__inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 12px 20px;
+    text-align: center;
+  }
+  .cdb__text { margin: 0; font-weight: 600; }
+  .cdb__timer { display: flex; gap: 12px; }
+  .cdb__timer[hidden] { display: none; }
+  .cdb__unit { display: flex; flex-direction: column; align-items: center; min-width: 44px; }
+  .cdb__num { font-size: 1.8rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .cdb__label { font-size: 1.1rem; text-transform: uppercase; opacity: 0.8; }
+  .cdb__button {
+    padding: 8px 18px;
+    border: 1px solid currentColor;
+    border-radius: 4px;
+    color: inherit;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .cdb__button[hidden] { display: none; }
+{% endstylesheet %}
+
+<div
+  id="cdb-{{ section.id }}"
+  class="cdb"
+  style="--cdb-bg: {{ section.settings.bg_color }}; --cdb-text: {{ section.settings.text_color }};"
+  data-end="{{ section.settings.end_date | strip | escape }}"
+  data-expired-text="{{ section.settings.expired_text | escape }}"
+>
+  <div class="cdb__inner page-width">
+    <p class="cdb__text">{{ section.settings.text | escape }}</p>
+
+    <div class="cdb__timer" role="timer" aria-live="off">
+      <div class="cdb__unit"><span class="cdb__num" data-days>00</span><span class="cdb__label">Days</span></div>
+      <div class="cdb__unit"><span class="cdb__num" data-hours>00</span><span class="cdb__label">Hrs</span></div>
+      <div class="cdb__unit"><span class="cdb__num" data-mins>00</span><span class="cdb__label">Min</span></div>
+      <div class="cdb__unit"><span class="cdb__num" data-secs>00</span><span class="cdb__label">Sec</span></div>
+    </div>
+
+    {%- if section.settings.button_label != blank and section.settings.button_link != blank -%}
+      <a class="cdb__button" href="{{ section.settings.button_link }}">
+        {{- section.settings.button_label | escape -}}
+      </a>
+    {%- endif -%}
+  </div>
+</div>
+
+<script>
+  (function () {
+    var el = document.getElementById('cdb-{{ section.id }}');
+    if (!el) return;
+
+    var end = new Date(el.getAttribute('data-end')).getTime();
+    var timer = el.querySelector('.cdb__timer');
+    var text = el.querySelector('.cdb__text');
+    var button = el.querySelector('.cdb__button');
+    var intervalId;
+
+    // Invalid or missing date: hide the timer instead of showing NaN
+    if (isNaN(end)) {
+      timer.hidden = true;
+      return;
+    }
+
+    function pad(n) {
+      return String(n).padStart(2, '0');
+    }
+
+    function tick() {
+      var diff = end - Date.now();
+
+      if (diff <= 0) {
+        text.textContent = el.getAttribute('data-expired-text');
+        timer.hidden = true;
+        if (button) button.hidden = true;
+        clearInterval(intervalId);
+        return;
+      }
+
+      var secs = Math.floor(diff / 1000);
+      el.querySelector('[data-days]').textContent = pad(Math.floor(secs / 86400));
+      el.querySelector('[data-hours]').textContent = pad(Math.floor((secs % 86400) / 3600));
+      el.querySelector('[data-mins]').textContent = pad(Math.floor((secs % 3600) / 60));
+      el.querySelector('[data-secs]').textContent = pad(secs % 60);
+    }
+
+    tick();
+    intervalId = setInterval(tick, 1000);
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Countdown banner",
+  "settings": [
+    {
+      "type": "text",
+      "id": "text",
+      "label": "Message",
+      "default": "Cyber Week sale ends in"
+    },
+    {
+      "type": "text",
+      "id": "end_date",
+      "label": "End date and time",
+      "info": "Format: YYYY-MM-DDTHH:MM, for example 2026-11-30T23:59. Uses the visitor's local time.",
+      "default": "2026-11-30T23:59"
+    },
+    {
+      "type": "text",
+      "id": "expired_text",
+      "label": "Message after the sale ends",
+      "default": "The Cyber Week sale has ended. Thanks for shopping with us!"
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "Button label",
+      "default": "Shop the sale"
+    },
+    {
+      "type": "url",
+      "id": "button_link",
+      "label": "Button link"
+    },
+    {
+      "type": "color",
+      "id": "bg_color",
+      "label": "Background color",
+      "default": "#0b1220"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text color",
+      "default": "#ffffff"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Countdown banner"
+    }
+  ]
+}
+{% endschema %}
